@@ -1,0 +1,21 @@
+# depslib dependency file v1.0
+1602745295 source:f:\ntu\y4\cz4041_zc\main.cpp
+	<iostream>
+	<fstream>
+	<string>
+	"Memory.h"
+
+1603034116 f:\ntu\y4\cz4041_zc\memory.h
+	<vector>
+	<iostream>
+	<set>
+
+1603034922 source:f:\ntu\y4\cz4041_zc\memory.cpp
+	"Memory.h"
+	<fstream>
+	<math.h>
+	<cstring>
+	<set>
+	<stdlib.h>
+	<fstream>
+
