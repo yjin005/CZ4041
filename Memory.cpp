@@ -672,7 +672,7 @@ void Memory::printNode(Mass* curMass){
 }
 
 void Memory::searchEqual(){
-    float x = 5.9;
+    float x = 8.0;
     bool found = false;
     int equal_search_node = 0;
     cout << endl << endl;
