@@ -114,6 +114,12 @@ class Memory
     void search_range(vector<Mass*> Masses);
     void range_search();
 
+    void redistributeMass(Mass* leftMass, Mass* rightMass, bool isLeaf, int posOfLeftMass, int whichOneisCurMass);
+    void mergeMass(Mass* leftMass, Mass* rightMass, bool isLeaf, int posOfRightMass);
+    void deleteNode(Mass* curMass, float val, int curMassPosition);
+    void printResultUpdated(vector<Mass*> Masses, bool bPrint = true);
+    void readMemoryUpdated();
+
 };
 
 

@@ -10,6 +10,7 @@
 using namespace std;
 float epsilon = 0.005f;
 int range_search_node = 0;
+int numberOfMerges = 0;
 Memory::Memory(){
 }
 
@@ -607,63 +608,6 @@ void Memory::search_range(vector < Mass* > Masses) {
 	cout << "please refer to datablock_2.txt and indexnode_2.txt" << endl;
 	printBlock(blockIndexs, false);
 }
-/* original
-void Memory::search_range(vector < Mass* > Masses) {
-    float x = 6.9;
-    float y = 9.0;
-	vector < Mass* > newMasses;
-	for (int i = 0; i < Masses.size(); i++) { //for every block
-		Mass* curMass =Masses[i];
-		int j;
-		for (j = 0; j < curMass->tNodes; j++) {  //traverse the childBlocks, print keys and save all the childBlocks
-			if ((curMass->key[j] >= x) && (curMass->key[j] <= y)){
-				if (curMass->childMass[j] != NULL) {
-					newMasses.push_back(curMass->childMass[j]);
-					printNode(curMass);
-					range_search_node++;
-					if (j==curMass->tNodes-1){
-						newMasses.push_back(curMass->childMass[j+1]);
-						range_search_node++;
-					}
-				} else{
-						if (curMass->key[j]>=x){
-							range_search_node++;
-							cout << curMass->index[j]->tconst << endl;
-						}
-				}
-			}else if (curMass->key[j] < x){
-                    printNode(curMass);
-					if (curMass->childMass[j] != NULL) {
-						newMasses.push_back(curMass->childMass[j+1]);
-						range_search_node++;
-					}else{
-						if (curMass->key[j]>=x){
-							range_search_node++;
-							cout << curMass->index[j]->tconst << endl;
-						}
-					}
-			}else if (curMass->key[j] > y){
-                    printNode(curMass);
-					if (curMass->childMass[j] != NULL) {
-						newMasses.push_back(curMass->childMass[j]);
-						range_search_node++;
-					}else{
-						if (curMass->key[j]>=x){
-							range_search_node++;
-							cout << curMass->index[j]->tconst << endl;
-						}
-					}
-			}
-	}
-}
-	if (newMasses.size() == 0) { //if there is no childBlock block left to send out then just the end of the recursion
-		Masses.clear();
-	}
-	else {                    //else send the childBlocks to the recursion to continue to the more depth
-		Masses.clear();
-		search_range(newMasses);
-	}
-}*/
 
 void Memory::printNode(Mass* curMass, bool isEqual){
     ofstream myfile;
@@ -742,7 +686,7 @@ void Memory::searchEqual(){
         cout << "values of tconst found: "<<endl;
         for(int i=0;i<ttconsts.size();i++){
             int tconstint = stoi(ttconsts[i].substr(2,10));
-            int blockIndex = ceil(tconstint/5.0);
+            int blockIndex = ceil(tconstint/25.0);
             blockIndexs.insert(blockIndex);
             cout << ttconsts[i] <<endl;
         }
@@ -809,6 +753,381 @@ void Memory::readMemory() {
 	if (curMass->key[j] == INT_MAX && curMass->childMass[j] != NULL)
 		newMasses.push_back(curMass->childMass[j]);
 	cout << "]  " << endl << "- it's children : ";
+	for (int i = 0; i < newMasses.size(); i++) { //for every Mass
+		Mass* curMass = newMasses[i];
+		cout << "[|";
+		int j;
+		for (j = 0; j < curMass->tNodes; j++) {  //traverse the childMasses, print keys and save all the childMasses
+			cout << " " << curMass->index[j]->tconst << "," << curMass->key[j] << ","
+				<< curMass->index[j]->numVotes << " |";
+		}
+		cout << "]  ";
+	}
+	cout << endl << endl;
+}
+
+void  Memory::redistributeMass(Mass* leftMass, Mass* rightMass, bool isLeaf, int posOfLeftMass, int whichOneisCurMass) {
+
+	//re-distribution will affect the first key of the rightMass, so remember it
+	//for later replacement of the copy of this key somewhere in ancestor Mass
+	int RightFirstValue = rightMass->key[0];
+
+	if (whichOneisCurMass == 0) { //leftMass is curMass
+
+		//if the Mass are not leaf node
+		if (!isLeaf) {
+			//bring down the key from which it is left child in parentMass
+			leftMass->key[leftMass->tNodes] = leftMass->parentMass->key[posOfLeftMass];
+			leftMass->index[leftMass->tNodes] = leftMass->parentMass->index[posOfLeftMass];
+			//the right child of newly added key should be the left child of first key of rightMass
+			leftMass->childMass[leftMass->tNodes + 1] = rightMass->childMass[0];
+			//increase leftMass's number of nodes by one
+			leftMass->tNodes++;
+			//send up a the first key of the rightMass to the parentMass
+			leftMass->parentMass->key[posOfLeftMass] = rightMass->key[0];
+			leftMass->parentMass->index[posOfLeftMass] = rightMass->index[0];
+			//shift left by one in rightMass
+			memcpy(&rightMass->key[0], &rightMass->key[1], sizeof(float) * (rightMass->tNodes + 1));
+			memcpy(&rightMass->index[0], &rightMass->index[1], sizeof(long) * (rightMass->tNodes + 1));
+			memcpy(&rightMass->childMass[0], &rightMass->childMass[1], sizeof(rootMass) * (rightMass->tNodes + 1));
+			rightMass->tNodes--;
+
+		}
+		else {
+			//borrow the first key of rightMass to the last position of leftMass
+			leftMass->key[leftMass->tNodes] = rightMass->key[0];
+			leftMass->index[leftMass->tNodes] = rightMass->index[0];
+			leftMass->tNodes++;
+			//shift by one node to left of the rightMass
+			memcpy(&rightMass->key[0], &rightMass->key[1], sizeof(float) * (rightMass->tNodes + 1));
+			memcpy(&rightMass->index[0], &rightMass->index[1], sizeof(long) * (rightMass->tNodes + 1));
+			//decrease number of nodes by one
+			rightMass->tNodes--;
+
+			leftMass->parentMass->key[posOfLeftMass] = rightMass->key[0];
+			leftMass->parentMass->index[posOfLeftMass] = rightMass->index[0];
+		}
+
+
+
+	}
+	else { //rightMass is curMass
+
+		if (!isLeaf) {
+
+			//shift right by one in rightMass so that first position becomes free
+			memcpy(&rightMass->key[1], &rightMass->key[0], sizeof(float) * (rightMass->tNodes + 1));
+			memcpy(&rightMass->index[1], &rightMass->index[0], sizeof(long) * (rightMass->tNodes + 1));
+			memcpy(&rightMass->childMass[1], &rightMass->childMass[0], sizeof(rootMass) * (rightMass->tNodes + 1));
+			//bring down the key from which it is left child in parentMass to first pos of rightMass
+			rightMass->key[0] = leftMass->parentMass->key[posOfLeftMass];
+			rightMass->index[0] = leftMass->parentMass->index[posOfLeftMass];
+			//and the left child of the newly first key of right child will be the last child of leftMass
+			rightMass->childMass[0] = leftMass->childMass[leftMass->tNodes];
+
+			rightMass->tNodes++;
+
+			//send up a the last key of the leftMass to the parentMass
+			leftMass->parentMass->key[posOfLeftMass] = leftMass->key[leftMass->tNodes - 1];
+			leftMass->parentMass->index[posOfLeftMass] = leftMass->index[leftMass->tNodes - 1];
+			//erase the last element and pointer of leftMass
+			leftMass->key[leftMass->tNodes - 1] = INT_MAX;
+			leftMass->index[leftMass->tNodes - 1] = NULL;
+			leftMass->childMass[leftMass->tNodes] = NULL;
+			leftMass->tNodes--;
+
+		}
+		else {
+
+			//shift by one node to right of the rightMass so that we can free the first position
+			memcpy(&rightMass->key[1], &rightMass->key[0], sizeof(float) * (rightMass->tNodes + 1));
+			memcpy(&rightMass->index[1], &rightMass->index[0], sizeof(long) * (rightMass->tNodes + 1));
+			//borrow the last key of leftMass to the first position of rightMass
+			rightMass->key[0] = leftMass->key[leftMass->tNodes - 1];
+			rightMass->index[0] = leftMass->index[leftMass->tNodes - 1];
+			//increase number of nodes by one
+			rightMass->tNodes++;
+
+			leftMass->key[leftMass->tNodes - 1] = INT_MAX;
+			leftMass->index[leftMass->tNodes - 1] = NULL;
+			leftMass->tNodes--;
+
+			leftMass->parentMass->key[posOfLeftMass] = rightMass->key[0];
+			leftMass->parentMass->index[posOfLeftMass] = rightMass->index[0];
+		}
+	}
+}
+
+
+void  Memory::mergeMass(Mass* leftMass, Mass* rightMass, bool isLeaf, int posOfRightMass) {
+
+	//cout << "leftMass " << leftMass->key[0] << " rightMass " << rightMass->key[0] << endl;
+	//cout << "size " << leftMass->tNodes << " size " << rightMass->tNodes << endl;
+	if (!isLeaf) {
+
+		leftMass->key[leftMass->tNodes] = leftMass->parentMass->key[posOfRightMass - 1];
+		leftMass->index[leftMass->tNodes] = leftMass->parentMass->index[posOfRightMass - 1];
+		leftMass->tNodes++;
+	}
+
+	memcpy(&leftMass->key[leftMass->tNodes], &rightMass->key[0], sizeof(float) * (rightMass->tNodes + 1));
+	memcpy(&leftMass->index[leftMass->tNodes], &rightMass->index[0], sizeof(long) * (rightMass->tNodes + 1));
+	memcpy(&leftMass->childMass[leftMass->tNodes], &rightMass->childMass[0], sizeof(rootMass) * (rightMass->tNodes + 1));
+
+
+	leftMass->tNodes += rightMass->tNodes;
+
+
+	//cout << "before: " << leftMass->parentMass->key[1] << endl;
+	memcpy(&leftMass->parentMass->key[posOfRightMass - 1], &leftMass->parentMass->key[posOfRightMass], sizeof(float) * (leftMass->parentMass->tNodes + 1));
+	memcpy(&leftMass->parentMass->index[posOfRightMass - 1], &leftMass->parentMass->index[posOfRightMass], sizeof(long) * (leftMass->parentMass->tNodes + 1));
+	memcpy(&leftMass->parentMass->childMass[posOfRightMass], &leftMass->parentMass->childMass[posOfRightMass + 1], sizeof(rootMass) * (leftMass->parentMass->tNodes + 1));
+	//cout << "after merging " << leftMass->parentMass->childMass[posOfRightMass-2]->key[0] << " and ";// << leftMass->parentMass->childMass[posOfRightMass]->key[0] << endl;
+	leftMass->parentMass->tNodes--;
+
+	//we reordered some Masss and pointers, so for the sake of safety
+	//all childMasss' should have their parent updated
+	for (int i = 0;leftMass->childMass[i] != NULL;i++) {
+		leftMass->childMass[i]->parentMass = leftMass;
+	}
+
+
+}
+bool dataFound;
+void  Memory::deleteNode(Mass* curMass, float val, int curMassPosition) {
+
+	//to check if the current Mass is a leaf or not
+	bool isLeaf;
+	if (curMass->childMass[0] == NULL)
+		isLeaf = true;
+	else isLeaf = false;
+
+	//left most key could be changed due to merge or re-distribution later,
+	//so keep it to replace it's copy from it's ancestor
+	int LeftMostValue = curMass->key[0];
+
+
+
+	for (int i = 0;dataFound == false && i <= curMass->tNodes; i++) {
+		if (val < curMass->key[i] && curMass->childMass[i] != NULL) {
+			deleteNode(curMass->childMass[i], val, i);
+
+		}
+		//if we could find the target key at any leafMass then
+		else if (val == curMass->key[i] && curMass->childMass[i] == NULL) {
+
+			//delete the node by shifting all values and pointers  by one to the left
+			memcpy(&curMass->key[i], &curMass->key[i + 1], sizeof(float) * (curMass->tNodes + 1));
+			memcpy(&curMass->index[i], &curMass->index[i + 1], sizeof(long) * (curMass->tNodes + 1));
+			//decrease number of nodes by one
+			curMass->tNodes--;
+			dataFound = true;
+			break;
+		}
+	}
+
+	//if the root is the only leaf
+	if (curMass->parentMass == NULL && curMass->childMass[0] == NULL) {
+		return;
+	}
+
+
+	//if the curMass is rootMass and it has one pointers only
+	if (curMass->parentMass == NULL && curMass->childMass[0] != NULL && curMass->tNodes == 0) {
+		rootMass = curMass->childMass[0];
+		rootMass->parentMass = NULL;
+		return;
+	}
+
+
+	//now check if the curMass has less than half of the number of maximum node
+	//cout << curMassPosition << endl;
+	//if less than half we will try to re-distribute first
+
+	//cout << curMass->childMass[0]->key[0] << " "<< curMassPosition << endl;
+	if (isLeaf && curMass->parentMass != NULL) {
+
+		if (curMassPosition == 0) {
+			Mass* rightMass = new Mass();
+			rightMass = curMass->parentMass->childMass[1];
+
+			//if we the right one has more than half nodes of maximum capacity than re-distribute
+			if (rightMass != NULL && rightMass->tNodes > (numberOfPointers + 1) / 2) {
+
+				redistributeMass(curMass, rightMass, isLeaf, 0, 0);
+			}
+			//else there is nothing to re-distribute, so we can merge them
+			else if (rightMass != NULL && curMass->tNodes + rightMass->tNodes < numberOfPointers) {
+
+				mergeMass(curMass, rightMass, isLeaf, 1);
+				numberOfMerges++;
+			}
+		}
+
+		else {
+
+
+			Mass* leftMass = new Mass();
+			Mass* rightMass = new Mass();
+
+
+			leftMass = curMass->parentMass->childMass[curMassPosition - 1];
+
+			rightMass = curMass->parentMass->childMass[curMassPosition + 1];
+
+
+			//if we see that left one has more than half nodes of maximum capacity then try to re-distribute
+			if (leftMass != NULL && leftMass->tNodes > (numberOfPointers + 1) / 2) {
+				redistributeMass(leftMass, curMass, isLeaf, curMassPosition - 1, 1);
+			}
+			else if (rightMass != NULL && rightMass->tNodes > (numberOfPointers + 1) / 2) {
+				redistributeMass(curMass, rightMass, isLeaf, curMassPosition, 0);
+			}
+			else if (leftMass != NULL && curMass->tNodes + leftMass->tNodes < numberOfPointers) {
+				mergeMass(leftMass, curMass, isLeaf, curMassPosition);
+				numberOfMerges++;
+			}
+			else if (rightMass != NULL && curMass->tNodes + rightMass->tNodes < numberOfPointers) {
+				mergeMass(curMass, rightMass, isLeaf, curMassPosition + 1);
+				numberOfMerges++;
+
+			}
+		}
+	}
+	else if (!isLeaf && curMass->parentMass != NULL) {
+
+		if (curMassPosition == 0) {
+			Mass* rightMass = new Mass();
+			rightMass = curMass->parentMass->childMass[1];
+
+			//if we see the right one has more than half nodes of maximum capacity than re-distribute
+			if (rightMass != NULL && rightMass->tNodes - 1 >= ceil((numberOfPointers - 1) / 2)) {
+				redistributeMass(curMass, rightMass, isLeaf, 0, 0);
+			}
+			//else there is nothing to re-distribute, so we can merge them
+			else if (rightMass != NULL && curMass->tNodes + rightMass->tNodes < numberOfPointers - 1) {
+				mergeMass(curMass, rightMass, isLeaf, 1);
+				numberOfMerges++;
+			}
+		}
+		//for any other case we can safely take the left one to try for re-distribution
+		else {
+
+
+			Mass* leftMass = new Mass();
+			Mass* rightMass = new Mass();
+
+
+			leftMass = curMass->parentMass->childMass[curMassPosition - 1];
+
+			rightMass = curMass->parentMass->childMass[curMassPosition + 1];
+
+
+			//if we see that left one has more than half nodes of maximum capacity then try to re-distribute
+			if (leftMass != NULL && leftMass->tNodes - 1 >= ceil((numberOfPointers - 1) / 2)) {
+				redistributeMass(leftMass, curMass, isLeaf, curMassPosition - 1, 1);
+			}
+			else if (rightMass != NULL && rightMass->tNodes - 1 >= ceil((numberOfPointers - 1) / 2)) {
+				redistributeMass(curMass, rightMass, isLeaf, curMassPosition, 0);
+			}
+			//else there is nothing to re-distribute, so we merge them
+
+			else if (leftMass != NULL && curMass->tNodes + leftMass->tNodes < numberOfPointers - 1) {
+				mergeMass(leftMass, curMass, isLeaf, curMassPosition);
+				numberOfMerges++;
+			}
+			else if (rightMass != NULL && curMass->tNodes + rightMass->tNodes < numberOfPointers - 1) {
+				mergeMass(curMass, rightMass, isLeaf, curMassPosition + 1);
+				numberOfMerges++;
+			}
+		}
+
+	}
+
+	//delete the duplicate if any in the ancestor Mass
+	Mass* tempMass = new Mass();
+	tempMass = curMass->parentMass;
+	while (tempMass != NULL) {
+		for (int i = 0; i < tempMass->tNodes;i++) {
+			if (tempMass->key[i] == LeftMostValue) {
+				tempMass->key[i] = curMass->key[0];
+				tempMass->index[i] = curMass->index[0];
+				break;
+			}
+		}
+		tempMass = tempMass->parentMass;
+	}
+
+}
+
+
+void Memory::printResultUpdated(vector<Mass*> Masses, bool bPrint) {
+	vector < Mass* > newMasses;
+	for (int i = 0; i < Masses.size(); i++) { //for every Mass
+		Mass* curMass = Masses[i];
+
+		if (bPrint) cout << "[|";
+		int j;
+		for (j = 0; j < curMass->tNodes; j++) {  //traverse the childMasses, print keys and save all the childMasses
+
+			if (bPrint) cout << " " << curMass->index[j]->tconst << "," << curMass->key[j] << ","
+				<< curMass->index[j]->numVotes << " |";
+
+			if (curMass->childMass[j] != NULL) {
+				newMasses.push_back(curMass->childMass[j]);
+			}
+		}
+		if (curMass->key[j] == INT_MAX && curMass->childMass[j] != NULL)
+			newMasses.push_back(curMass->childMass[j]);
+
+		if (bPrint) cout << "]  ";
+		if (!bPrint) numberOfNodes++;
+	}
+
+	if (bPrint) cout << endl << endl;
+	if (Masses.size() > 0) if (!bPrint) numberOfLevels++;
+
+	if (newMasses.size() == 0) { //if there is no childMass Mass left to send out then just the end of the recursion
+		Masses.clear();
+	}
+	else {                    //else send the childMasses to the recursion to continue to the more depth
+		Masses.clear();
+		printResult(newMasses, bPrint);
+	}
+}
+
+void Memory::readMemoryUpdated() {
+	Mass* curMass = Masses[0];
+	float val = 7.0;
+	int curMassPosition = 0;
+
+	deleteNode(curMass, val, curMassPosition);
+
+	numberOfLevels = 0;
+	numberOfNodes = 0;
+	Masses.clear();
+	Masses.push_back(rootMass);
+	printResultUpdated(Masses, false);
+	cout << endl << endl;
+	cout << "- number of times that a node is deleted(or two nodes are merged) during updating : " << numberOfMerges << endl;
+	cout << "- the number of nodes of the updated B+ tree : " << numberOfNodes << endl;
+	cout << "- the height of the updated B+ tree : " << numberOfLevels << endl << "- root node of the updated B+ tree: ";
+	vector < Mass* > newMasses;
+	//Mass* curMass = rootMass;
+	cout << "[|";
+	int j;
+	for (j = 0; j < curMass->tNodes; j++) {  //traverse the childMasses, print keys and save all the childMasses
+
+		cout << " " << curMass->index[j]->tconst << "," << curMass->key[j] << ","
+			<< curMass->index[j]->numVotes << " |";
+
+		if (curMass->childMass[j] != NULL) {
+			newMasses.push_back(curMass->childMass[j]);
+		}
+	}
+	if (curMass->key[j] == INT_MAX && curMass->childMass[j] != NULL)
+		newMasses.push_back(curMass->childMass[j]);
+	cout << "]  " << endl << "- it's children of the updated B+ tree: ";
 	for (int i = 0; i < newMasses.size(); i++) { //for every Mass
 		Mass* curMass = newMasses[i];
 		cout << "[|";

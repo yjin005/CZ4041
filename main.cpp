@@ -63,6 +63,11 @@ int main()
             cout << "\n Search for range between 7 and 9 ..\n";
             storageMem->range_search();
             break;
+        case 10:
+            cout << "\n Delete the memory data from the B+ Tree...\n";
+            cout << "delete movies with averageRating = 7.0: ";
+            storageMem->readMemoryUpdated();
+            break;
         case 0:
             cout << "\n To exit the menu";
             return 0;
@@ -70,7 +75,7 @@ int main()
         default:
             cout << "\n Invalid selection";
         }
-    } while (selection > 0 && selection < 10);
+    } while (selection > 0 && selection <= 11);
 
 
     cout << "THATS ALL FOLKS!" << endl;
@@ -151,6 +156,9 @@ void displayMainMenu() {
 	cout << "\n========Search===========";
 	cout << "\n 8 - Search one value";
 	cout << "\n 9 - Search within range";
+    cout << "\n========Delete===========";
+    cout << "\n 10 - Deletion";
+
     cout << "\n Enter selection: ";
 }
 
