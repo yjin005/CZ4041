@@ -31,14 +31,15 @@ int main()
             loadIntoMemory(storageMem);
             break;
         case 4:
-            cout << "\n Memory + Read File Test\n";
+            cout << "\n Initialise Memory + Read File + Load to Memory\n";
             storageMem = initMemory();
             readFromFile();
             loadIntoMemory(storageMem);
             break;
         case 5:
-            cout << "\n Testing of Memory Traversal\n";
-            storageMem->iterMemory();
+            cout << "\n Display Record Statistics\n";
+            storageMem->getRecordStats(storageMem->getRootBlockPointer()->rootRecord);
+            //storageMem->iterMemory();
             //initBPlusTree(storageMem);
             break;
         case 6:
@@ -147,17 +148,17 @@ void displayMainMenu() {
     cout << "\n 1 - Initialise Memory";
     cout << "\n 2 - Read From File";
     cout << "\n 3 - Load into Memory";
-    cout << "\n 4 - Memory + Read File Test";
-    cout << "\n 5 - Testing of Memory Traversal";
+    cout << "\n 4 - Initialise Memory + Read File + Load to Memory";
+    cout << "\n 5 - Display Record Statistics";
 	cout << "\n========Insertion=======";
 	cout << "\n 6 - Insertion";
 	cout << "\n 7 - Print Tree";
-	cout << "\n 0 - Exit";
 	cout << "\n========Search===========";
 	cout << "\n 8 - Search one value";
 	cout << "\n 9 - Search within range";
     cout << "\n========Delete===========";
     cout << "\n 10 - Deletion";
+    cout << "\n 0 - Exit";
 
     cout << "\n Enter selection: ";
 }

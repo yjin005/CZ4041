@@ -13,16 +13,13 @@ struct Record{
     float averageRating;
     int numVotes;
     struct Record *next;
-    Record() {
-        next = NULL;
-    }
 };
 
 struct Block{
     int recordCount;
 
     struct Record *rootRecord; // root record node
-    struct Record *currentRecord;
+    struct Record *currentRecord; // current record node
     struct Record *nextFreeRecord; // memcpy into this
 
     struct Block *nextFreeBlock;
@@ -99,6 +96,7 @@ class Memory
     struct Block* getCurrentBlockPointer();
 
     bool isCurrentBlockFull(std::size_t recordSize);
+    void getRecordStats(Record* rec);
 
     void iterMemory();
     void printBlock(set<int> indexes, bool isEqual);

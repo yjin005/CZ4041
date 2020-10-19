@@ -119,10 +119,7 @@ struct Block* Memory::allocateRecordToMem(Record record){
         // current block not full
         bool success = allocateBlockStruct();
 
-        if(success){
-            std::cout << "\nBlock Allocated Successfully!" << std::endl;
-        }
-        else{
+        if(!success){
             return NULL;
         }
     }
@@ -154,8 +151,8 @@ void Memory::deallocateRecord(Record record){
 void Memory::displayStats(){
     std::cout << "\n--- Display Statistics ---\n";
     std::cout << "Memory Statistics\n";
-    std::cout << "Total Memory Size: " << memorySize << "\n";
-    std::cout << "Total Memory Size Used: " << totalMemSizeUsed << "\n";
+    std::cout << "Total Memory Size: " << memorySize << "B\n";
+    std::cout << "Total Memory Size Used: " << totalMemSizeUsed << "B\n";
 
     std::cout << "\n";
 
@@ -198,6 +195,14 @@ bool Memory::isCurrentBlockFull(std::size_t recordSize){
 //    else{
 //        return true;
 //    }
+}
+
+void Memory::getRecordStats(Record* rec){
+    std::cout << "Record Statistics: \n" << std::endl;
+    std::cout << "Tconst (char[10]) Size: " << sizeof(rec->tconst) << std::endl;
+    std::cout << "averageRating (float) Size: " << sizeof(rec->averageRating) << std::endl;
+    std::cout << "numVotes (int) Size: " << sizeof(rec->numVotes) << std::endl;
+    std::cout << "*next (struct Record) Size: " << sizeof(rec->next) << std::endl;
 }
 
 void Memory::iterMemory(){
