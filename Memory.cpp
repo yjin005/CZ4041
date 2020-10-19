@@ -219,14 +219,18 @@ void Memory::iterMemory(){
 
 }
 
-void Memory::printBlock(set <int> indexes){
+void Memory::printBlock(set <int> indexes, bool isEqual){
     Block* rootBlock = rootBlockPtr;
     Block* currBlock = rootBlock;
     //currBlock = currBlock->nextBlock;
 
     int i = 0;
     ofstream myfile;
-    myfile.open("datablock_search_for_eight.txt");
+    if (isEqual){
+        myfile.open("datablock_1.txt");
+    }else{
+        myfile.open("datablock_2.txt");
+    }
     while(currBlock!=NULL){
         Record* rootRecord = currBlock->rootRecord;
         Record* currRecord = rootRecord;
@@ -540,11 +544,10 @@ void Memory::search_range(vector < Mass* > Masses) {
     int equal_search_node = 0;
     cout << endl << endl;
 	cout << "Displaying results for search averageRating between 7.0 and 9.0" << endl;
-	cout << Masses.size() <<endl;
 	Mass* curMass = Masses[0];
 	// WHILE NON leaf node
 	while (curMass->childMass[0]!=NULL){
-	    printNode(curMass);
+	    printNode(curMass, false);
 		for (int i = 0; i < curMass->tNodes; i++){
 		    if (curMass->parentMass!=NULL){
                 if (curMass->key[i] >= x){
@@ -567,7 +570,7 @@ void Memory::search_range(vector < Mass* > Masses) {
 		}
 		//cout << curBlock->key[0] <<endl;
 	}
-	printNode(curMass);
+	printNode(curMass, false);
 	vector <string> ttconsts;
 	equal_search_node++;
 	set <int> blockIndexs;
@@ -584,7 +587,7 @@ void Memory::search_range(vector < Mass* > Masses) {
 		if (i==curMass->tNodes){
             equal_search_node++;
             curMass = curMass->nextMass;
-            printNode(curMass);
+            printNode(curMass, false);
             i = 0;
 		}
 	}
@@ -595,13 +598,14 @@ void Memory::search_range(vector < Mass* > Masses) {
             int tconstint = stoi(ttconsts[i].substr(2,10));
             int blockIndex = ceil(tconstint/5.0);
             blockIndexs.insert(blockIndex);
+            cout << ttconsts[i] << endl;
         }
 	}
 	cout << "number of index nodes accessed: " << equal_search_node << endl;
 	cout << "number of data blocks accessed: " << blockIndexs.size() << endl;
 	cout << "content of index nodes and data blocks are saved into txt files respectively!" << endl;
-	cout << "please refer to datablock_1.txt and indexnode_1.txt" << endl;
-	printBlock(blockIndexs);
+	cout << "please refer to datablock_2.txt and indexnode_2.txt" << endl;
+	printBlock(blockIndexs, false);
 }
 /* original
 void Memory::search_range(vector < Mass* > Masses) {
@@ -661,9 +665,13 @@ void Memory::search_range(vector < Mass* > Masses) {
 	}
 }*/
 
-void Memory::printNode(Mass* curMass){
+void Memory::printNode(Mass* curMass, bool isEqual){
     ofstream myfile;
-    myfile.open("indexnode_1.txt", ios_base::app);
+    if(isEqual){
+        myfile.open("indexnode_1.txt", ios_base::app);
+    }else{
+        myfile.open("indexnode_2.txt", ios_base::app);
+    }
     myfile << "accessing node: " << endl;
     for(int i = 0; i < curMass->tNodes; i++){
         myfile << curMass->index[i]->tconst << ' ' << curMass->index[i]->averageRating << ' ' << curMass->index[i]->numVotes << endl;
@@ -680,7 +688,7 @@ void Memory::searchEqual(){
 	Mass* curMass = Masses[0];
 	// WHILE NON leaf node
 	while (curMass->childMass[0]!=NULL){
-	    printNode(curMass);
+	    printNode(curMass, true);
 		for (int i = 0; i < curMass->tNodes; i++){
 		    if (curMass->parentMass!=NULL){
                 if (curMass->key[i] >= x){
@@ -703,7 +711,7 @@ void Memory::searchEqual(){
 		}
 		//cout << curBlock->key[0] <<endl;
 	}
-	printNode(curMass);
+	printNode(curMass, true);
 	vector <string> ttconsts;
 	equal_search_node++;
 	set <int> blockIndexs;
@@ -723,7 +731,7 @@ void Memory::searchEqual(){
             if (curMass == NULL){
                 break;
             }
-            printNode(curMass);
+            printNode(curMass, true);
             i = 0;
 		}
 	}
@@ -736,13 +744,14 @@ void Memory::searchEqual(){
             int tconstint = stoi(ttconsts[i].substr(2,10));
             int blockIndex = ceil(tconstint/5.0);
             blockIndexs.insert(blockIndex);
+            cout << ttconsts[i] <<endl;
         }
 	}
 	cout << "number of index nodes accessed: " << equal_search_node << endl;
 	cout << "number of data blocks accessed: " << blockIndexs.size() << endl;
 	cout << "content of index nodes and data blocks are saved into txt files respectively!" << endl;
 	cout << "please refer to datablock_1.txt and indexnode_1.txt" << endl;
-	printBlock(blockIndexs);
+	printBlock(blockIndexs, true);
 }
 
 

@@ -101,7 +101,7 @@ class Memory
     bool isCurrentBlockFull(std::size_t recordSize);
 
     void iterMemory();
-    void printBlock(set<int> indexes);
+    void printBlock(set<int> indexes, bool isEqual);
     void splitLeaf(Mass* curMass);
     void splitNonLeaf(Mass* curMass);
     void insertNode(Mass* curMass, float val, Record * id);
@@ -110,9 +110,10 @@ class Memory
     void resultPrint();
     void readMemory();
     void searchEqual();
-    void printNode(Mass* curMass);
+    void printNode(Mass* curMass, bool isEqual);
     void search_range(vector<Mass*> Masses);
     void range_search();
+
 };
 
 
